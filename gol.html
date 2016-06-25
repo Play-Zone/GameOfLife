@@ -1,0 +1,170 @@
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Game of Life (Javascript)</title>
+    <style>
+        canvas {
+            border: 1px solid #d3d3d3;
+            background-color: #fafafa;
+        }
+    </style>
+</head>
+<body onload="startGame()">
+<script>
+    var SIZEX = 5;
+    var SIZEY = 5;
+    var FIELDX = 300;
+    var FIELDY = 150;
+
+    var fieldA = new Array(FIELDY * FIELDX).fill(0);
+    var running = true;
+
+    function startGame() {
+        fillRandom();
+        myGameArea.start();
+    }
+
+    var myGameArea = {
+        canvas: document.createElement("canvas"),
+        start: function() {
+            this.canvas.width = FIELDX * SIZEX;
+            this.canvas.height = FIELDY * SIZEY;
+            this.context = this.canvas.getContext("2d");
+
+            var div = document.getElementById("gamecanvas");
+            div.appendChild(this.canvas);
+
+            this.interval = setInterval(updateGameArea, 20);
+            window.addEventListener('mousemove', mouseMove);
+        },
+        clear: function() {
+            this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+    }
+
+    function mouseMove(e) {
+
+        if (running) {
+            return;
+        }
+
+        var canvas = myGameArea.canvas;
+        var rect = canvas.getBoundingClientRect();
+        var posX = e.clientX - rect.left;
+        var posY = e.clientY - rect.top;
+        var x = parseInt((posX - (SIZEX / 2)) / SIZEX);
+        var y = parseInt((posY - (SIZEY / 2)) / SIZEY);
+        setTile(fieldA, x, y);
+        updateGameArea();
+    }
+
+    function updateGameArea() {
+        myGameArea.clear();
+
+        if (running) step();
+
+        var ctx = myGameArea.context;
+        ctx.fillStyle = "rgb(50,50,50)";
+
+        var sizeX = SIZEX > 2 ? SIZEX - 1 : SIZEX;
+        var sizeY = SIZEY > 2 ? SIZEY - 1 : SIZEX;
+
+        for (var y = 0; y < FIELDY; y++) {
+            for (var x = 0; x < FIELDX; x++) {
+                if (getTile(fieldA, x, y)) {
+                    ctx.fillRect(x * SIZEX, y * SIZEX, sizeX, sizeY);
+                }
+            }
+        }
+    }
+
+    function step() {
+        var fieldB = new Array(FIELDY * FIELDX).fill(0);
+        for (var y = 0; y < FIELDY; y++) {
+            for (var x = 0; x < FIELDX; x++) {
+                var neighbours = getNeighbours(fieldA, x, y);
+                if (getTile(fieldA, x, y) === 0) {
+                    if (neighbours === 3) {
+                        setTile(fieldB, x, y);
+                    }
+                } else {
+                    if (neighbours === 2 || neighbours === 3) {
+                        setTile(fieldB, x, y);
+                    };
+                }
+            }
+        }
+        fieldA = fieldB;
+    }
+
+    function getNeighbours(field, x, y) {
+        var neighbours = 0;
+        neighbours += getNeighbour(field, x - 1, y - 1);
+        neighbours += getNeighbour(field, x, y - 1);
+        neighbours += getNeighbour(field, x + 1, y - 1);
+        neighbours += getNeighbour(field, x - 1, y);
+        neighbours += getNeighbour(field, x + 1, y);
+        neighbours += getNeighbour(field, x - 1, y + 1);
+        neighbours += getNeighbour(field, x, y + 1);
+        neighbours += getNeighbour(field, x + 1, y + 1);
+        return neighbours;
+    }
+
+    function getNeighbour(field, x, y) {
+        if (x >= 0 && x < FIELDX && y >= 0 && y < FIELDY && getTile(field, x, y) > 0) {
+            return 1;
+        }
+        return 0;
+    }
+
+    function getTile(field, x, y) {
+        return field[y * FIELDX + x];
+    }
+
+    function setTile(field, x, y) {
+        field[y * FIELDX + x] = 1;
+    }
+
+    function clearTile(field, x, y) {
+        field[y * FIELDX + x] = 0;
+    }
+
+    function fillRandom() {
+        var l = fieldA.length;
+        for (var i = 0; i < l; i++) {
+            fieldA[i] = Math.round(Math.random());
+        }
+    }
+
+    function clearField() {
+        var l = fieldA.length;
+        for (var i = 0; i < l; i++) {
+            fieldA[i] = 0;
+        }
+    }
+
+    function pause() {
+        console.log("P");
+        if (running) {
+            running = false;
+            document.getElementById("pauseButton").value = "Start";
+        } else {
+            running = true;
+            document.getElementById("pauseButton").value = "Pause";
+        }
+    }
+
+</script>
+
+<div align="center" id="game">
+    <p>Simple Game of Life</p>
+    <div id="gamecanvas"></div>
+    <p>
+        <input type="button" onmouseup="fillRandom()" value="Random"/>
+        <input type="button" onmouseup="clearField()" value="Clear"/>
+        <input type="button" id="pauseButton" onmouseup="pause()" value="Pause"/>
+    </p>
+</div>
+
+</body>
+</html>
